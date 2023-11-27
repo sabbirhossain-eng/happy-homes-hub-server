@@ -1,5 +1,5 @@
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
@@ -30,6 +30,8 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     const userCollection = client.db("happyHomesHub").collection("users");
+    const petCollection = client.db("happyHomesHub").collection("pets");
+    const adoptPetCollection = client.db("happyHomesHub").collection("adoptPets");
    
    
     // jwt token verify
@@ -75,6 +77,14 @@ async function run() {
         const result = await userCollection.find().toArray();
         res.send(result);
       });
+      app.get('/users/:email', verifyToken, async(req, res)=>{
+        const query = {email: req.params.email};
+        if(req.params.email !== req.params.email){
+          return res.status(403).send({massage: 'forbidden access'})
+        }
+        const result = await userCollection.find(query).toArray();
+        res.send(result);
+      })
 
       app.get("/users/admin/:email", verifyToken, async (req, res) => {
         const email = req.params.email;
@@ -101,6 +111,33 @@ async function run() {
         res.send(result);
       });
 
+
+      // pets api
+
+      app.get("/pets", async (req, res) => {
+        const result = await petCollection.find().toArray();
+        res.send(result);
+      });
+  
+      app.get("/pets/:id", async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const result = await petCollection.findOne(filter);
+        res.send(result);
+      });
+
+      app.post('/pets', async(req, res) =>{
+        const item = req.body;
+        const result = await petCollection.insertOne(item);
+        res.send(result);
+      })
+
+      // adopt api
+      app.post('/adoptPets', async(req, res) =>{
+        const adoptInfo = req.body;
+        const result = await adoptPetCollection.insertOne(adoptInfo);
+        res.send(result);
+      })
 
 
     // Send a ping to confirm a successful connection
