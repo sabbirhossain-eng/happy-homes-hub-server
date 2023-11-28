@@ -29,9 +29,8 @@ async function run() {
     // await client.connect();
     const userCollection = client.db("happyHomesHub").collection("users");
     const petCollection = client.db("happyHomesHub").collection("pets");
-    const adoptPetCollection = client
-      .db("happyHomesHub")
-      .collection("adoptPets");
+    const adoptPetCollection = client.db("happyHomesHub").collection("adoptPets");
+    const donationCollection = client.db("happyHomesHub").collection("donations");
 
     // jwt token verify
 
@@ -115,15 +114,10 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/pets", verifyToken, async (req, res) => {
-      const email = req.query.email;
-
-      console.error("Server: rs rq for email:", email);
-
+    app.get("/pets_by_email/:email", async (req, res) => {
+      const email = req.params.email;
       const query = { email: email };
       const result = await petCollection.find(query).toArray();
-
-      console.log("Server: Sending pets:", result);
       res.send(result);
     });
 
@@ -133,7 +127,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/pets/users/:id", verifyToken, async (req, res) => {
+    app.patch("/pets/update/:id", verifyToken, async (req, res) => {
       const pet = req.body;
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -154,8 +148,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/pets/users/:id", verifyToken, async (req, res) => {
-      const pet = req.body;
+    app.patch("/pets/adopted/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -180,6 +173,22 @@ async function run() {
       const result = await adoptPetCollection.insertOne(adoptInfo);
       res.send(result);
     });
+
+    // create donations
+
+    app.get("/createDonation_by_email/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await donationCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post('/createDonation', verifyToken, async(req, res) =>{
+      const donationInfo = req.body;
+      const result = await donationCollection.insertOne(donationInfo);
+      res.send(result);
+    });
+    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
