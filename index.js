@@ -175,6 +175,12 @@ async function run() {
     });
 
     // create donations
+    app.get("/donations/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await donationCollection.findOne(filter);
+      res.send(result);
+    });
 
     app.get("/createDonation_by_email/:email", async (req, res) => {
       const email = req.params.email;
@@ -189,6 +195,37 @@ async function run() {
       res.send(result);
     });
     
+    app.patch("/donations/edit/:id", verifyToken, async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          image: item.image,
+      name: item.name,
+      lastDate: item.lastDate,
+      amount: item.amount,
+      short_description: item.short_description,
+      description: item.description,
+      donation: item.donation,
+      date: item.date,
+        },
+      };
+      const result = await donationCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.patch("/createDonation_status/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          adopted: req.body.adopted,
+        },
+      };
+      const result = await donationCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
