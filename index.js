@@ -31,6 +31,7 @@ async function run() {
     const petCollection = client.db("happyHomesHub").collection("pets");
     const adoptPetCollection = client.db("happyHomesHub").collection("adoptPets");
     const donationCollection = client.db("happyHomesHub").collection("donations");
+    const paymentDonationCollection = client.db("happyHomesHub").collection("paymentDonations");
 
     // jwt token verify
 
@@ -175,6 +176,11 @@ async function run() {
     });
 
     // create donations
+    app.get("/donations", async (req, res) => {
+      const result = await donationCollection.find().toArray();
+      res.send(result);
+    });
+
     app.get("/donations/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -189,12 +195,12 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/createDonation', verifyToken, async(req, res) =>{
+    app.post("/createDonation", verifyToken, async (req, res) => {
       const donationInfo = req.body;
       const result = await donationCollection.insertOne(donationInfo);
       res.send(result);
     });
-    
+
     app.patch("/donations/edit/:id", verifyToken, async (req, res) => {
       const item = req.body;
       const id = req.params.id;
@@ -202,13 +208,13 @@ async function run() {
       const updateDoc = {
         $set: {
           image: item.image,
-      name: item.name,
-      lastDate: item.lastDate,
-      amount: item.amount,
-      short_description: item.short_description,
-      description: item.description,
-      donation: item.donation,
-      date: item.date,
+          name: item.name,
+          lastDate: item.lastDate,
+          amount: item.amount,
+          short_description: item.short_description,
+          description: item.description,
+          donation: item.donation,
+          date: item.date,
         },
       };
       const result = await donationCollection.updateOne(filter, updateDoc);
@@ -220,11 +226,45 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          adopted: req.body.adopted,
+          donation: req.body.donation,
         },
       };
       const result = await donationCollection.updateOne(filter, updateDoc);
       res.send(result);
+    });
+
+    app.patch("/donation_amount_add/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          donationAmount: req.body.addAmount,
+        },
+      };
+      const result = await donationCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // Payment api
+    app.post('/paymentIntent', async (req, res) => {
+      const { money } = req.body;
+      const amount = parseInt(money * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    });
+
+    app.post('/paymentDonations', async(req, res)=>{
+      const payment = req.body;
+      const paymentResult = await paymentDonationCollection.insertOne(payment);
+
+      res.send(paymentResult)
     });
 
     // Send a ping to confirm a successful connection
