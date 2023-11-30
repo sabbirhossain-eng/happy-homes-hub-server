@@ -11,9 +11,8 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(cors({
   origin:[
-    "http://localhost:5173",
-    // "https://happy-homes-hub.web.app",
-    // "https://happy-homes-hub.firebaseapp.com"
+    "https://happy-homes-hub.web.app",
+    "https://happy-homes-hub.firebaseapp.com"
   ],
   credentials: true,
 }));
@@ -207,6 +206,34 @@ async function run() {
     });
 
     // adopt api
+
+    app.get("/adoptPets", async (req, res) => {
+      const items= req.body;
+      const result = await adoptPetCollection.find(items).toArray();
+      res.send(result);
+    });
+    
+    app.get("/adoptPets/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await adoptPetCollection.findOne(filter);
+      res.send(result);
+    });
+
+
+    app.patch("/adoptPets_request/:id", verifyToken, async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          adoption: req.body.adoption,
+        },
+      };
+      const result = await adoptPetCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     app.post("/adoptPets", async (req, res) => {
       const adoptInfo = req.body;
       const result = await adoptPetCollection.insertOne(adoptInfo);
@@ -226,7 +253,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/createDonation_by_email/:email", async (req, res) => {
+    app.get("/createDonation_by_email/:email",  async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await donationCollection.find(query).toArray();
@@ -339,10 +366,10 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
