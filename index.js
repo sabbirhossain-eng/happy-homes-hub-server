@@ -11,8 +11,9 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(cors({
   origin:[
-    "https://happy-homes-hub.web.app",
-    "https://happy-homes-hub.firebaseapp.com"
+    "http://localhost:5173",
+    // "https://happy-homes-hub.web.app",
+    // "https://happy-homes-hub.firebaseapp.com"
   ],
   credentials: true,
 }));
